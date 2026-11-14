@@ -985,13 +985,29 @@ void main() {
       expect(find.text('Cancel'), findsOneWidget);
     });
 
-    testWidgets('does not resolve legacy /challengeId link', (WidgetTester tester) async {
-      const challengeId = ChallengeId('abcdefgh');
-      final uri = Uri.parse('https://lichess.org/${challengeId.value}');
+    testWidgets('resolves legacy /challengeId link', (WidgetTester tester) async {
+      const challenge = Challenge(
+        id: ChallengeId('abcdefgh'),
+        challenger: (
+          user: LightUser(id: UserId('thibault'), name: 'Thibault'),
+          rating: 3000,
+          provisionalRating: null,
+          lagRating: null,
+        ),
+        status: ChallengeStatus.created,
+        variant: Variant.standard,
+        speed: Speed.blitz,
+        timeControl: ChallengeTimeControlType.clock,
+        clock: (increment: Duration.zero, time: Duration(minutes: 5)),
+        rated: true,
+        sideChoice: SideChoice.white,
+      );
+      final uri = Uri.parse('https://lichess.org/${challenge.id.value}');
       final mockGameRepository = MockGameRepository();
       when(() => mockGameRepository.getGame(const GameId('abcdefgh')))
           .thenThrow(Exception('Not found'));
       final mockChallengeRepository = MockChallengeRepository();
+      when(() => mockChallengeRepository.show(challenge.id)).thenAnswer((_) async => challenge);
 
       await triggerAppLink(
         tester,
@@ -1006,8 +1022,9 @@ void main() {
       await tester.pumpAndSettle();
 
       verify(() => mockGameRepository.getGame(const GameId('abcdefgh'))).called(1);
-      verifyNever(() => mockChallengeRepository.show(challengeId));
-      expect(find.text('test link'), findsOneWidget); // Still on the same screen
+      verify(() => mockChallengeRepository.show(challenge.id)).called(1);
+      expect(find.text('Thibault challenges you: ♚ Black • Rated • 5+0'), findsOneWidget);
+      expect(find.text('Accept'), findsOneWidget);
     });
 
     testWidgets('resolves /@/user link', (WidgetTester tester) async {

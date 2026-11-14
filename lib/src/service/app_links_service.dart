@@ -325,10 +325,18 @@ class AppLinksService(final Ref ref, {AppLinks? appLinks}) {
     }
   }
 
+  /// Shows the challenge confirm dialog if [appLinkUri] is a `/game/{id}` or legacy `/{id}`
+  /// challenge link. The legacy form is the `url` the challenge API returns, e.g. for an open
+  /// challenge restricted to two players.
   Future<bool> _tryResolveChallengeLink(BuildContext context, Uri appLinkUri) async {
-    if (appLinkUri.pathSegments.firstOrNull != 'game') return false;
+    final id = switch (appLinkUri.pathSegments) {
+      ['game', final id, ...] => id,
+      [_] when _isLegacyGameLink(appLinkUri) => appLinkUri.pathSegments.first,
+      _ => null,
+    };
+    if (id == null) return false;
     try {
-      final challengeId = ChallengeId(appLinkUri.pathSegments[1]);
+      final challengeId = ChallengeId(id);
       if (!challengeId.isValid) return false;
       final challenge = await ref.read(challengeRepositoryProvider).show(challengeId);
       if (!context.mounted) return false;
