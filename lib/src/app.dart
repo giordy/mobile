@@ -3,6 +3,7 @@ import 'dart:io';
 
 // ignore: deprecated_member_use
 import 'package:cupertino_ui/cupertino_ui.dart' show CupertinoUiCompatibilityBridge;
+import 'package:flutter/foundation.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:home_widget/home_widget.dart';
@@ -110,7 +111,7 @@ class _AppState() extends ConsumerState<Application> {
       ref.read(gameLiveActivityChannelProvider).endAll();
     }
     HomeWidget.saveWidgetData<String>('lichessHost', kLichessHost).then((_) {
-      if (Platform.isAndroid) {
+      if (defaultTargetPlatform == .android) {
         // Refresh the broadcast widget whenever the app is opened, in case its background updates
         // were delayed or failed.
         HomeWidget.updateWidget(qualifiedAndroidName: _kAndroidBroadcastWidgetProvider);
